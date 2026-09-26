@@ -1,0 +1,47 @@
+# Additional requirements for the scaled (2D / foundation-model) study.
+# The 1D suite in requirements.txt still runs on CPU with nothing but torch.
+
+torch>=2.4            # torch.func.jvp/vjp under vmap with chunk_size
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+
+h5py>=3.9             # PDEBench / The Well HDF5 loaders (hipp.scale.data2d)
+
+# --- optional, only for the pretrained foundation-model adapters -----------
+# Each is imported lazily and raises an actionable error if missing, so none of
+# them is needed to run the pipeline against a locally trained surrogate.
+#
+# transformers>=4.40,<5  # from_pretrained, for every adapter below.
+#   The upper bound is scOT's, not ours: it is written against 4.29 and calls
+#   internals v5 removed (get_head_mask is the first). adapters._patch_scot
+#   shims that one, but nothing here is verified on v5 and run_fm.sh gates it.
+# huggingface_hub>=0.20
+#
+#   Poseidon (scOT), camlab-ethz -- 21M / 158M / 629M checkpoints on the Hub.
+#   Do NOT `pip install` it: pyproject pins transformers==4.29.2 and torch==2.0.1,
+#   which would downgrade this environment. The package is pure Python and
+#   imports unchanged against current transformers, so check it out instead --
+#
+#     git clone https://github.com/camlab-ethz/poseidon.git third_party/poseidon
+#
+#   which is where hipp.scale.adapters._import_scot looks (or $SCOT_PATH).
+#   Verified working against transformers 4.57.3 / torch 2.10.
+#
+#   DPOT, Hao et al. -- 7M / 30M / 122M / 509M / 1.03B checkpoints on the Hub.
+#   As with scOT, use a source checkout rather than letting its old requirements
+#   replace the cluster torch:
+#
+#     git clone https://github.com/HaoZhongkai/DPOT.git third_party/dpot
+#     python -m pip install einops timm
+#
+#   Walrus, PolymathicAI -- 1.3B space-time transformer. Weights are now on the
+#   Hub under polymathic-ai/walrus, but the public model needs its Well
+#   formatter / field-index contract before J is meaningful.
+# git+https://github.com/PolymathicAI/walrus.git
+#
+#   The Well benchmark checkpoints -- useful external controls, not FMs.
+# python -m pip install "the_well[benchmark]"
+#
+#   OmniArch / PDEformer-2 -- no PyTorch autoregressive-map route exists; see
+#   adapters.from_omniarch and adapters.from_pdeformer.
